@@ -12,8 +12,11 @@
     tools:context="com.example.rafaelrodrigues.myapplication.MainActivity"
     tools:showIn="@layout/app_bar_main">
 
-    <TextView
+    <ListView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="9000:9000" />
+        android:id="@+id/listView"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
 </RelativeLayout>

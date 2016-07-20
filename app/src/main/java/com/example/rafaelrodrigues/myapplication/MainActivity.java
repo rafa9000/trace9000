@@ -1,71 +1,88 @@
 package com.example.rafaelrodrigues.myapplication;
 
-import android.content.Context;
 import android.content.Intent;
-import android.location.LocationManager;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
+import android.widget.Toast;
+
+import com.example.rafaelrodrigues.myapplication.banco.BancoController;
+import com.example.rafaelrodrigues.myapplication.banco.ConfiguracaoActivity;
+import com.example.rafaelrodrigues.myapplication.banco.Trace9000Banco;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, IGPSActivity {
 
-    private GPS gps;
+    private GPSTracker gps;
+    private ListView lista;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.i("tdsfasdfasdfasd", "sdfasdfasdfasdfasdf");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        gps = new GPS(this);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        getSupportActionBar().setTitle(Html.fromHtml("<font color='#ffffff'>Trace9000</font>"));
+        final Intent intent = new Intent(this, ConfiguracaoActivity.class);
+
+        FloatingActionButton floatingActionButton = (FloatingActionButton) findViewById(R.id.fab);
+        floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+            public void onClick(View v) {
+                Log.i("teste", "teste");
+                startActivity(intent);
             }
         });
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
-        toggle.syncState();
+        gps = new GPSTracker(MainActivity.this);
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+        // Check if GPS enabled
+        if(gps.canGetLocation()) {
 
+            double latitude = gps.getLatitude();
+            double longitude = gps.getLongitude();
 
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if (locationManager
-                .isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 10000,
-                    1, this);
-            Log.i("GPS_PROVIDER", "GPS_PROVIDER");
-        } else if (locationManager
-                .isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-            locationManager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER, 10000,
-                    1, this);
-            Log.i("NETWORK_PROVIDER", "NETWORK_PROVIDER");
+            // \n is for new line
+            Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
+        } else {
+            // Can't get location.
+            // GPS or network is not enabled.
+            // Ask user to enable GPS/network in settings.
+            gps.showSettingsAlert();
         }
+
+
+        BancoController crud = new BancoController(getBaseContext());
+        double latitude = gps.getLatitude();
+        double longitude = gps.getLongitude();
+//        crud.insereDado(latitude +" " + longitude);
+
+        Cursor cursor = crud.carregaDados();
+
+        String[] nomeCampos = new String[] {Trace9000Banco.ID, Trace9000Banco.NOME};
+        int[] idViews = new int[] {R.id.name, R.id.textView1};
+
+        SimpleCursorAdapter adaptador = new SimpleCursorAdapter(getBaseContext(),
+                R.layout.list_row,cursor,nomeCampos,idViews, 0);
+        lista = (ListView)findViewById(R.id.listView);
+        /*lista.setAdapter(adaptador);*/
 
     }
 
@@ -107,10 +124,12 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
+/*
         if (id == R.id.nav_trace) {
             // Handle the camera action        } else if (id == R.id.nav_lista) {
 
         }
+*/
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
